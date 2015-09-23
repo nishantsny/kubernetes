@@ -1775,6 +1775,66 @@ func convert_experimental_DeploymentStatus_To_v1_DeploymentStatus(in *experiment
 	return nil
 }
 
+func convert_experimental_DerivedContainerMetrics_To_v1_DerivedContainerMetrics(in *experimental.DerivedContainerMetrics, out *DerivedContainerMetrics, s conversion.Scope) error {
+	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
+		defaulting.(func(*experimental.DerivedContainerMetrics))(in)
+	}
+	out.ContainerName = in.ContainerName
+	if err := convert_experimental_MetricsWindows_To_v1_MetricsWindows(&in.ContainerMetrics, &out.ContainerMetrics, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+func convert_experimental_DerivedNodeMetrics_To_v1_DerivedNodeMetrics(in *experimental.DerivedNodeMetrics, out *DerivedNodeMetrics, s conversion.Scope) error {
+	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
+		defaulting.(func(*experimental.DerivedNodeMetrics))(in)
+	}
+	if err := s.Convert(&in.TypeMeta, &out.TypeMeta, 0); err != nil {
+		return err
+	}
+	if err := convert_api_ObjectMeta_To_v1_ObjectMeta(&in.ObjectMeta, &out.ObjectMeta, s); err != nil {
+		return err
+	}
+	if err := convert_experimental_MetricsWindows_To_v1_MetricsWindows(&in.NodeMetrics, &out.NodeMetrics, s); err != nil {
+		return err
+	}
+	if in.SystemContainers != nil {
+		out.SystemContainers = make([]DerivedContainerMetrics, len(in.SystemContainers))
+		for i := range in.SystemContainers {
+			if err := convert_experimental_DerivedContainerMetrics_To_v1_DerivedContainerMetrics(&in.SystemContainers[i], &out.SystemContainers[i], s); err != nil {
+				return err
+			}
+		}
+	} else {
+		out.SystemContainers = nil
+	}
+	return nil
+}
+
+func convert_experimental_DerivedNodeMetricsList_To_v1_DerivedNodeMetricsList(in *experimental.DerivedNodeMetricsList, out *DerivedNodeMetricsList, s conversion.Scope) error {
+	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
+		defaulting.(func(*experimental.DerivedNodeMetricsList))(in)
+	}
+	if err := s.Convert(&in.TypeMeta, &out.TypeMeta, 0); err != nil {
+		return err
+	}
+	if err := s.Convert(&in.ListMeta, &out.ListMeta, 0); err != nil {
+		return err
+	}
+	if in.Items != nil {
+		out.Items = make([]DerivedNodeMetrics, len(in.Items))
+		for i := range in.Items {
+			if err := convert_experimental_DerivedNodeMetrics_To_v1_DerivedNodeMetrics(&in.Items[i], &out.Items[i], s); err != nil {
+				return err
+			}
+		}
+	} else {
+		out.Items = nil
+	}
+	return nil
+}
+
 func convert_experimental_HorizontalPodAutoscaler_To_v1_HorizontalPodAutoscaler(in *experimental.HorizontalPodAutoscaler, out *HorizontalPodAutoscaler, s conversion.Scope) error {
 	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
 		defaulting.(func(*experimental.HorizontalPodAutoscaler))(in)
@@ -2106,6 +2166,72 @@ func convert_experimental_JobStatus_To_v1_JobStatus(in *experimental.JobStatus, 
 	return nil
 }
 
+func convert_experimental_MetricsWindow_To_v1_MetricsWindow(in *experimental.MetricsWindow, out *MetricsWindow, s conversion.Scope) error {
+	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
+		defaulting.(func(*experimental.MetricsWindow))(in)
+	}
+	if err := s.Convert(&in.Duration, &out.Duration, 0); err != nil {
+		return err
+	}
+	if in.Mean != nil {
+		out.Mean = make(ResourceUsage)
+		for key, val := range in.Mean {
+			newVal := resource.Quantity{}
+			if err := s.Convert(&val, &newVal, 0); err != nil {
+				return err
+			}
+			out.Mean[key] = newVal
+		}
+	} else {
+		out.Mean = nil
+	}
+	if in.Max != nil {
+		out.Max = make(ResourceUsage)
+		for key, val := range in.Max {
+			newVal := resource.Quantity{}
+			if err := s.Convert(&val, &newVal, 0); err != nil {
+				return err
+			}
+			out.Max[key] = newVal
+		}
+	} else {
+		out.Max = nil
+	}
+	if in.NinetyFifthPercentile != nil {
+		out.NinetyFifthPercentile = make(ResourceUsage)
+		for key, val := range in.NinetyFifthPercentile {
+			newVal := resource.Quantity{}
+			if err := s.Convert(&val, &newVal, 0); err != nil {
+				return err
+			}
+			out.NinetyFifthPercentile[key] = newVal
+		}
+	} else {
+		out.NinetyFifthPercentile = nil
+	}
+	return nil
+}
+
+func convert_experimental_MetricsWindows_To_v1_MetricsWindows(in *experimental.MetricsWindows, out *MetricsWindows, s conversion.Scope) error {
+	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
+		defaulting.(func(*experimental.MetricsWindows))(in)
+	}
+	if err := s.Convert(&in.EndTime, &out.EndTime, 0); err != nil {
+		return err
+	}
+	if in.Windows != nil {
+		out.Windows = make([]MetricsWindow, len(in.Windows))
+		for i := range in.Windows {
+			if err := convert_experimental_MetricsWindow_To_v1_MetricsWindow(&in.Windows[i], &out.Windows[i], s); err != nil {
+				return err
+			}
+		}
+	} else {
+		out.Windows = nil
+	}
+	return nil
+}
+
 func convert_experimental_ReplicationControllerDummy_To_v1_ReplicationControllerDummy(in *experimental.ReplicationControllerDummy, out *ReplicationControllerDummy, s conversion.Scope) error {
 	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
 		defaulting.(func(*experimental.ReplicationControllerDummy))(in)
@@ -2400,6 +2526,66 @@ func convert_v1_DeploymentStatus_To_experimental_DeploymentStatus(in *Deployment
 	}
 	out.Replicas = in.Replicas
 	out.UpdatedReplicas = in.UpdatedReplicas
+	return nil
+}
+
+func convert_v1_DerivedContainerMetrics_To_experimental_DerivedContainerMetrics(in *DerivedContainerMetrics, out *experimental.DerivedContainerMetrics, s conversion.Scope) error {
+	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
+		defaulting.(func(*DerivedContainerMetrics))(in)
+	}
+	out.ContainerName = in.ContainerName
+	if err := convert_v1_MetricsWindows_To_experimental_MetricsWindows(&in.ContainerMetrics, &out.ContainerMetrics, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+func convert_v1_DerivedNodeMetrics_To_experimental_DerivedNodeMetrics(in *DerivedNodeMetrics, out *experimental.DerivedNodeMetrics, s conversion.Scope) error {
+	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
+		defaulting.(func(*DerivedNodeMetrics))(in)
+	}
+	if err := s.Convert(&in.TypeMeta, &out.TypeMeta, 0); err != nil {
+		return err
+	}
+	if err := convert_v1_ObjectMeta_To_api_ObjectMeta(&in.ObjectMeta, &out.ObjectMeta, s); err != nil {
+		return err
+	}
+	if err := convert_v1_MetricsWindows_To_experimental_MetricsWindows(&in.NodeMetrics, &out.NodeMetrics, s); err != nil {
+		return err
+	}
+	if in.SystemContainers != nil {
+		out.SystemContainers = make([]experimental.DerivedContainerMetrics, len(in.SystemContainers))
+		for i := range in.SystemContainers {
+			if err := convert_v1_DerivedContainerMetrics_To_experimental_DerivedContainerMetrics(&in.SystemContainers[i], &out.SystemContainers[i], s); err != nil {
+				return err
+			}
+		}
+	} else {
+		out.SystemContainers = nil
+	}
+	return nil
+}
+
+func convert_v1_DerivedNodeMetricsList_To_experimental_DerivedNodeMetricsList(in *DerivedNodeMetricsList, out *experimental.DerivedNodeMetricsList, s conversion.Scope) error {
+	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
+		defaulting.(func(*DerivedNodeMetricsList))(in)
+	}
+	if err := s.Convert(&in.TypeMeta, &out.TypeMeta, 0); err != nil {
+		return err
+	}
+	if err := s.Convert(&in.ListMeta, &out.ListMeta, 0); err != nil {
+		return err
+	}
+	if in.Items != nil {
+		out.Items = make([]experimental.DerivedNodeMetrics, len(in.Items))
+		for i := range in.Items {
+			if err := convert_v1_DerivedNodeMetrics_To_experimental_DerivedNodeMetrics(&in.Items[i], &out.Items[i], s); err != nil {
+				return err
+			}
+		}
+	} else {
+		out.Items = nil
+	}
 	return nil
 }
 
@@ -2734,6 +2920,72 @@ func convert_v1_JobStatus_To_experimental_JobStatus(in *JobStatus, out *experime
 	return nil
 }
 
+func convert_v1_MetricsWindow_To_experimental_MetricsWindow(in *MetricsWindow, out *experimental.MetricsWindow, s conversion.Scope) error {
+	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
+		defaulting.(func(*MetricsWindow))(in)
+	}
+	if err := s.Convert(&in.Duration, &out.Duration, 0); err != nil {
+		return err
+	}
+	if in.Mean != nil {
+		out.Mean = make(experimental.ResourceUsage)
+		for key, val := range in.Mean {
+			newVal := resource.Quantity{}
+			if err := s.Convert(&val, &newVal, 0); err != nil {
+				return err
+			}
+			out.Mean[key] = newVal
+		}
+	} else {
+		out.Mean = nil
+	}
+	if in.Max != nil {
+		out.Max = make(experimental.ResourceUsage)
+		for key, val := range in.Max {
+			newVal := resource.Quantity{}
+			if err := s.Convert(&val, &newVal, 0); err != nil {
+				return err
+			}
+			out.Max[key] = newVal
+		}
+	} else {
+		out.Max = nil
+	}
+	if in.NinetyFifthPercentile != nil {
+		out.NinetyFifthPercentile = make(experimental.ResourceUsage)
+		for key, val := range in.NinetyFifthPercentile {
+			newVal := resource.Quantity{}
+			if err := s.Convert(&val, &newVal, 0); err != nil {
+				return err
+			}
+			out.NinetyFifthPercentile[key] = newVal
+		}
+	} else {
+		out.NinetyFifthPercentile = nil
+	}
+	return nil
+}
+
+func convert_v1_MetricsWindows_To_experimental_MetricsWindows(in *MetricsWindows, out *experimental.MetricsWindows, s conversion.Scope) error {
+	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
+		defaulting.(func(*MetricsWindows))(in)
+	}
+	if err := s.Convert(&in.EndTime, &out.EndTime, 0); err != nil {
+		return err
+	}
+	if in.Windows != nil {
+		out.Windows = make([]experimental.MetricsWindow, len(in.Windows))
+		for i := range in.Windows {
+			if err := convert_v1_MetricsWindow_To_experimental_MetricsWindow(&in.Windows[i], &out.Windows[i], s); err != nil {
+				return err
+			}
+		}
+	} else {
+		out.Windows = nil
+	}
+	return nil
+}
+
 func convert_v1_ReplicationControllerDummy_To_experimental_ReplicationControllerDummy(in *ReplicationControllerDummy, out *experimental.ReplicationControllerDummy, s conversion.Scope) error {
 	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
 		defaulting.(func(*ReplicationControllerDummy))(in)
@@ -2945,6 +3197,9 @@ func init() {
 		convert_experimental_DeploymentList_To_v1_DeploymentList,
 		convert_experimental_DeploymentStatus_To_v1_DeploymentStatus,
 		convert_experimental_Deployment_To_v1_Deployment,
+		convert_experimental_DerivedContainerMetrics_To_v1_DerivedContainerMetrics,
+		convert_experimental_DerivedNodeMetricsList_To_v1_DerivedNodeMetricsList,
+		convert_experimental_DerivedNodeMetrics_To_v1_DerivedNodeMetrics,
 		convert_experimental_HorizontalPodAutoscalerList_To_v1_HorizontalPodAutoscalerList,
 		convert_experimental_HorizontalPodAutoscalerSpec_To_v1_HorizontalPodAutoscalerSpec,
 		convert_experimental_HorizontalPodAutoscalerStatus_To_v1_HorizontalPodAutoscalerStatus,
@@ -2961,6 +3216,8 @@ func init() {
 		convert_experimental_JobSpec_To_v1_JobSpec,
 		convert_experimental_JobStatus_To_v1_JobStatus,
 		convert_experimental_Job_To_v1_Job,
+		convert_experimental_MetricsWindow_To_v1_MetricsWindow,
+		convert_experimental_MetricsWindows_To_v1_MetricsWindows,
 		convert_experimental_ReplicationControllerDummy_To_v1_ReplicationControllerDummy,
 		convert_experimental_ResourceConsumption_To_v1_ResourceConsumption,
 		convert_experimental_ScaleSpec_To_v1_ScaleSpec,
@@ -2985,6 +3242,9 @@ func init() {
 		convert_v1_DeploymentList_To_experimental_DeploymentList,
 		convert_v1_DeploymentStatus_To_experimental_DeploymentStatus,
 		convert_v1_Deployment_To_experimental_Deployment,
+		convert_v1_DerivedContainerMetrics_To_experimental_DerivedContainerMetrics,
+		convert_v1_DerivedNodeMetricsList_To_experimental_DerivedNodeMetricsList,
+		convert_v1_DerivedNodeMetrics_To_experimental_DerivedNodeMetrics,
 		convert_v1_DownwardAPIVolumeFile_To_api_DownwardAPIVolumeFile,
 		convert_v1_DownwardAPIVolumeSource_To_api_DownwardAPIVolumeSource,
 		convert_v1_EmptyDirVolumeSource_To_api_EmptyDirVolumeSource,
@@ -3019,6 +3279,8 @@ func init() {
 		convert_v1_LoadBalancerIngress_To_api_LoadBalancerIngress,
 		convert_v1_LoadBalancerStatus_To_api_LoadBalancerStatus,
 		convert_v1_LocalObjectReference_To_api_LocalObjectReference,
+		convert_v1_MetricsWindow_To_experimental_MetricsWindow,
+		convert_v1_MetricsWindows_To_experimental_MetricsWindows,
 		convert_v1_NFSVolumeSource_To_api_NFSVolumeSource,
 		convert_v1_ObjectFieldSelector_To_api_ObjectFieldSelector,
 		convert_v1_ObjectMeta_To_api_ObjectMeta,
