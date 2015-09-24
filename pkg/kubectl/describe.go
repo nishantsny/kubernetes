@@ -18,6 +18,7 @@ package kubectl
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"reflect"
@@ -1136,7 +1137,7 @@ func describeServiceAccount(serviceAccount *api.ServiceAccount, tokens []api.Sec
 
 // NodeDescriber generates information about a node.
 type NodeDescriber struct {
-	client.Interface
+	*client.Client
 }
 
 func (d *NodeDescriber) Describe(namespace, name string) (string, error) {
@@ -1167,11 +1168,25 @@ func (d *NodeDescriber) Describe(namespace, name string) (string, error) {
 		ref.UID = types.UID(ref.Name)
 		events, _ = d.Events("").Search(ref)
 	}
+	// /proxy/namespaces/kube-system/services/heapster:api/apis/experimental/v1/nodemetrics
+	var metrics *experimental.DerivedNodeMetrics
+	b, err := d.Client.Get().
+		Prefix("proxy").
+		Namespace("kube-system").
+		Suffix("services", "heapster:api", "apis", "experimental", "v1", "nodemetrics", name).
+		DoRaw()
+	if err != nil {
+		glog.Infof("err = %v", err)
+	} else {
+		if err := json.Unmarshal(b, &metrics); err != nil {
+			glog.Infof("err = %v", err)
+		}
+	}
 
-	return describeNode(node, pods, events)
+	return describeNode(node, pods, metrics, events)
 }
 
-func describeNode(node *api.Node, pods []*api.Pod, events *api.EventList) (string, error) {
+func describeNode(node *api.Node, pods []*api.Pod, metrics *experimental.DerivedNodeMetrics, events *api.EventList) (string, error) {
 	return tabbedString(func(out io.Writer) error {
 		fmt.Fprintf(out, "Name:\t%s\n", node.Name)
 		fmt.Fprintf(out, "Labels:\t%s\n", labels.FormatLabels(node.Labels))
@@ -1220,6 +1235,9 @@ func describeNode(node *api.Node, pods []*api.Pod, events *api.EventList) (strin
 		}
 		if err := describeNodeResource(pods, node, out); err != nil {
 			return err
+		}
+		if metrics != nil {
+			_ = describeNodeMetrics(metrics, out)
 		}
 
 		if events != nil {
@@ -1312,6 +1330,18 @@ func describeNodeResource(pods []*api.Pod, node *api.Node, out io.Writer) error 
 	fmt.Fprintf(out, "  %s (%d%%)\t%s (%d%%)\t%s (%d%%)\t%s (%d%%)\n",
 		cpuReqs.String(), int64(fractionCpuReqs), cpuLimits.String(), int64(fractionCpuLimits),
 		memoryReqs.String(), int64(fractionMemoryReqs), memoryLimits.String(), int64(fractionMemoryLimits))
+	return nil
+}
+
+func describeNodeMetrics(metrics *experimental.DerivedNodeMetrics, out io.Writer) error {
+	fmt.Fprintf(out, "Resource usage metrics (mean):\n")
+	fmt.Fprint(out, "  Window\tCPU\tMemory\n")
+	fmt.Fprint(out, "        \t───\t──────\n")
+	for _, w := range metrics.NodeMetrics.Windows {
+		cpu := w.Mean["cpu"]
+		mem := w.Mean["memory"]
+		fmt.Fprintf(out, "  %s\t%s\t%s\n", w.Duration, cpu.String(), mem.String())
+	}
 	return nil
 }
 
