@@ -292,6 +292,7 @@ func TestExpapi(t *testing.T) {
 	master, config, assert := setUp(t)
 
 	expAPIGroup := master.experimental(&config)
+
 	assert.Equal(expAPIGroup.Root, master.apiGroupPrefix)
 	assert.Equal(expAPIGroup.Mapper, latest.GroupOrDie("experimental").RESTMapper)
 	assert.Equal(expAPIGroup.Codec, latest.GroupOrDie("experimental").Codec)

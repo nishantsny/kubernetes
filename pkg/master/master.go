@@ -31,6 +31,10 @@ import (
 	"sync/atomic"
 	"time"
 
+	// nishant 
+	"log"
+	// nishant 
+
 	"k8s.io/kubernetes/pkg/admission"
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/api/latest"
@@ -646,6 +650,18 @@ func (m *Master) init(c *Config) {
 	apiserver.AddApiWebService(m.handlerContainer, c.APIPrefix, apiVersions)
 	apiserver.InstallServiceErrorHandler(m.handlerContainer, m.newAPIRequestInfoResolver(), apiVersions)
 
+	//nishant
+	var logFileName string = "/home/nishant/test/kuberLogInit"
+    f, err := os.OpenFile(logFileName, os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+	if err != nil {
+	    panic(err)
+	}
+	defer f.Close()
+
+	log.SetOutput(f)
+	log.Println("In master: in init exp_flag: %t",m.exp)
+	//nishant
+
 	// allGroups records all supported groups at /apis
 	allGroups := []api.APIGroup{}
 	if m.exp {
@@ -1033,6 +1049,21 @@ func (m *Master) thirdpartyapi(group, kind, version string) *apiserver.APIGroupV
 
 // experimental returns the resources and codec for the experimental api
 func (m *Master) experimental(c *Config) *apiserver.APIGroupVersion {
+
+
+	//nishant
+	var logFileName string = "/home/nishant/test/kuberLog"
+    f, err := os.OpenFile(logFileName, os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+	if err != nil {
+	    panic(err)
+	}
+	defer f.Close()
+
+	log.SetOutput(f)
+	log.Println("In master experimental func called")
+	//nishant
+
+
 	controllerStorage := expcontrolleretcd.NewStorage(c.StorageDestinations.get("", "replicationControllers"))
 	dbClient := func(resource string) storage.Interface {
 		return c.StorageDestinations.get("experimental", resource)

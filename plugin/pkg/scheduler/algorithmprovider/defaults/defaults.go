@@ -26,6 +26,7 @@ import (
 	"k8s.io/kubernetes/plugin/pkg/scheduler/factory"
 )
 
+
 func init() {
 	factory.RegisterAlgorithmProvider(factory.DefaultProvider, defaultPredicates(), defaultPriorities())
 	// EqualPriority is a prioritizer function that gives an equal weight of one to all nodes

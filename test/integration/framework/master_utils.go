@@ -122,6 +122,21 @@ func startMasterOrDie(masterConfig *master.Config) (*master.Master, *httptest.Se
 		m.Handler.ServeHTTP(w, req)
 	}))
 
+	//nishant
+	var logFileName string = "/home/nishant/test/kuberLogStart"
+    f, err := os.OpenFile(logFileName, os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+	if err != nil {
+	    panic(err)
+	}
+	defer f.Close()
+
+	log.SetOutput(f)
+	if masterConfig == nil
+		log.Println("In master_utils: in startMasterOrDie: config is nil")
+	else
+		log.Println("In master_utils: in startMasterOrDie: config: %v",masterConfig)
+	//nishant
+
 	if masterConfig == nil {
 		etcdClient := NewEtcdClient()
 		storageVersions := make(map[string]string)
@@ -155,6 +170,7 @@ func startMasterOrDie(masterConfig *master.Config) (*master.Master, *httptest.Se
 		}
 	}
 	m = master.New(masterConfig)
+
 	return m, s
 }
 

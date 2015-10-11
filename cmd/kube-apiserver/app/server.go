@@ -53,6 +53,8 @@ import (
 	"github.com/spf13/pflag"
 )
 
+import "log"
+
 const (
 	// Maximum duration before timing out read/write requests
 	// Set to a value larger than the timeouts in each watch server.
@@ -396,7 +398,7 @@ func (s *APIServer) Run(_ []string) error {
 
 	// "experimental/v1alpha1={true|false} allows users to enable/disable the experimental API.
 	// This takes preference over api/all, if specified.
-	enableExp := s.getRuntimeConfigValue("experimental/v1alpha1", false)
+	enableExp := s.getRuntimeConfigValue("experimental/v1alpha1", /*nishant false*/ true)
 
 	clientConfig := &client.Config{
 		Host:    net.JoinHostPort(s.InsecureBindAddress.String(), strconv.Itoa(s.InsecurePort)),
@@ -616,6 +618,18 @@ func (s *APIServer) Run(_ []string) error {
 					glog.Errorf("Unable to listen for secure (%v); will try again.", err)
 				}
 				time.Sleep(15 * time.Second)
+				//nishant
+				var logFileName string = "/home/nishant/test/kuberLogServer"
+			    f, err := os.OpenFile(logFileName, os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+				if err != nil {
+				    panic(err)
+				}
+				defer f.Close()
+
+				log.SetOutput(f)
+				log.Println("In server: in Run master: %v",m)
+				fmt.Println("In server: in Run master: %v",m)
+				//nishant
 			}
 		}()
 	}
