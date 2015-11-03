@@ -60,6 +60,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+
+	"k8s.io/kubernetes/pkg/api"
+	"log"
+	"os"
 )
 
 // CMServer is the main context object for the controller manager.
@@ -325,11 +329,32 @@ func (s *CMServer) Run(_ []string) error {
 	groupVersion := "extensions/v1beta1"
 	resources, found := resourceMap[groupVersion]
 	// TODO: this needs to be dynamic so users don't have to restart their controller manager if they change the apiserver
+
+
+	var logFileName string = "/tmp/kubeLogServer"
+	f, err := os.OpenFile(logFileName, os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+	if err != nil { panic(err)}
+	defer f.Close()
+	log.SetOutput(f)
+
+	log.Println("In server: YOYO")
+
 	if containsVersion(versions, groupVersion) && found {
 		glog.Infof("Starting %s apis", groupVersion)
 		if containsResource(resources, "horizontalpodautoscalers") {
 			glog.Infof("Starting horizontal pod controller.")
-			podautoscaler.NewHorizontalController(kubeClient, metrics.NewHeapsterMetricsClient(kubeClient)).
+			// nishant
+			localMetricsClient := metrics.NewHeapsterMetricsClient(kubeClient)
+			consumption, request, metricError := localMetricsClient.GetResourceConsumptionAndRequest(api.ResourceCPU,"default",map[string]string{})
+
+			if metricError != nil {
+				log.Println("In server: %v",consumption)
+				log.Println("In server: %v",request)
+			} else{
+				log.Println("In server: error:%v",metricError)
+			}
+			// nishant			
+			podautoscaler.NewHorizontalController(kubeClient, localMetricsClient).
 				Run(s.HorizontalPodAutoscalerSyncPeriod)
 		}
 
