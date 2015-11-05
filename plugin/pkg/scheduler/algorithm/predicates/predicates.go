@@ -19,6 +19,12 @@ package predicates
 import (
 	"fmt"
 
+    //nishant
+    "net/http"
+    "io/ioutil"
+    "encoding/json"
+    "crypto/tls"
+
 	"k8s.io/kubernetes/pkg/api"
 	client "k8s.io/kubernetes/pkg/client/unversioned"
 	"k8s.io/kubernetes/pkg/labels"
@@ -117,12 +123,45 @@ func getResourceRequest(pod *api.Pod) resourceRequest {
 	return result
 }
 
+//nishant
+func prettyPrintUrl(url string){
+	// Trust Certificates
+    tr := &http.Transport{
+        TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+    }
+    client := &http.Client{Transport: tr}
+    /* Authenticate */
+    req, err := http.NewRequest("GET", url, nil)
+    req.SetBasicAuth("vagrant","vagrant")
+    response, err := client.Do(req)
+    if err != nil {
+        glog.V(1).Infof("ErrorY : %v", err)
+    } else {
+	    body, _ := ioutil.ReadAll(response.Body)
+	    var parsed_body interface{}
+	    json.Unmarshal(body, &parsed_body)
+	    pretty_parsed_body , err := json.MarshalIndent(parsed_body, "", "  ")
+	    if(err != nil) {
+	    	glog.V(1).Infof("ErrorY :%v",err)
+    	} else {
+    		glog.V(1).Infof("yay!!\n:%s",string(pretty_parsed_body))
+    	}
+	}
+    defer response.Body.Close()
+    return
+}
+
 func CheckPodsExceedingFreeResources(pods []*api.Pod, capacity api.ResourceList) (fitting []*api.Pod, notFittingCPU, notFittingMemory []*api.Pod) {
 	totalMilliCPU := capacity.Cpu().MilliValue()
 	totalMemory := capacity.Memory().Value()
 	milliCPURequested := int64(0)
 	memoryRequested := int64(0)
 	for _, pod := range pods {
+
+		//nishant
+		prettyPrintUrl("https://10.245.1.2/api/v1/proxy/namespaces/kube-system/services/heapster/api/v1/model/metrics/cpu-usage/")
+		prettyPrintUrl("https://10.245.1.2/api/v1/proxy/namespaces/kube-system/services/heapster/api/v1/model/namespaces/kube-system/pods/" + pod.Name + "/metrics/cpu-usage")
+
 		podRequest := getResourceRequest(pod)
 		fitsCPU := totalMilliCPU == 0 || (totalMilliCPU-milliCPURequested) >= podRequest.milliCPU
 		fitsMemory := totalMemory == 0 || (totalMemory-memoryRequested) >= podRequest.memory
