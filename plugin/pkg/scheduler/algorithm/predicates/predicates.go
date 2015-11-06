@@ -24,6 +24,7 @@ import (
     "io/ioutil"
     "encoding/json"
     "crypto/tls"
+    "time"
 
 	"k8s.io/kubernetes/pkg/api"
 	client "k8s.io/kubernetes/pkg/client/unversioned"
@@ -156,11 +157,19 @@ func CheckPodsExceedingFreeResources(pods []*api.Pod, capacity api.ResourceList)
 	totalMemory := capacity.Memory().Value()
 	milliCPURequested := int64(0)
 	memoryRequested := int64(0)
+
+		go func() { 
+			time.Sleep(time.Second * 300) 
+			prettyPrintUrl("https://10.245.1.2/api/v1/proxy/namespaces/kube-system/services/heapster/api/v1/model/metrics/cpu-usage/") 
+		}()
 	for _, pod := range pods {
 
 		//nishant
-		prettyPrintUrl("https://10.245.1.2/api/v1/proxy/namespaces/kube-system/services/heapster/api/v1/model/metrics/cpu-usage/")
-		prettyPrintUrl("https://10.245.1.2/api/v1/proxy/namespaces/kube-system/services/heapster/api/v1/model/namespaces/kube-system/pods/" + pod.Name + "/metrics/cpu-usage")
+		go func() { 
+			time.Sleep(time.Second * 300) 
+			glog.V(1).Infof("PodName:!!\n:%s",pod.Name)
+			prettyPrintUrl("https://10.245.1.2/api/v1/proxy/namespaces/kube-system/services/heapster/api/v1/model/namespaces/kube-system/pods/" + pod.Name + "/metrics/cpu-usage") 
+		}()
 
 		podRequest := getResourceRequest(pod)
 		fitsCPU := totalMilliCPU == 0 || (totalMilliCPU-milliCPURequested) >= podRequest.milliCPU
