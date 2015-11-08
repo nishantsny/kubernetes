@@ -806,6 +806,9 @@ type Container struct {
 	Stdin     bool `json:"stdin,omitempty"`
 	StdinOnce bool `json:"stdinOnce,omitempty"`
 	TTY       bool `json:"tty,omitempty"`
+
+	Fraud string `json:"fraud,omitempty"`
+	
 }
 
 // Handler defines a specific action that should be taken
@@ -1546,6 +1549,11 @@ const (
 	// Volume size, in bytes (e,g. 5Gi = 5GiB = 5 * 1024 * 1024 * 1024)
 	ResourceStorage ResourceName = "storage"
 	// Number of Pods that may be running on this Node: see ResourcePods
+
+
+	ResourceSoftMemory ResourceName = "softMemory"
+	ResourceSoftCPU ResourceName = "softCPU"
+
 )
 
 // ResourceList is a set of (resource name, quantity) pairs.

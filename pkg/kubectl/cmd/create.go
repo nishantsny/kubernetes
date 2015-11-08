@@ -28,6 +28,12 @@ import (
 	cmdutil "k8s.io/kubernetes/pkg/kubectl/cmd/util"
 	"k8s.io/kubernetes/pkg/kubectl/resource"
 	"k8s.io/kubernetes/pkg/runtime"
+
+	"os"
+	"log"
+	"encoding/json"
+	"bytes"
+
 )
 
 // CreateOptions is the start of the data required to perform the operation.  As new fields are added, add them here instead of
@@ -115,6 +121,29 @@ func RunCreate(f *cmdutil.Factory, cmd *cobra.Command, out io.Writer, options *C
 		if err != nil {
 			return cmdutil.AddSourceToErr("creating", info.Source, err)
 		}
+
+
+    //////////////////////////////////////////////////////////
+		var logFileName2 string = "/home/nishant/test/kuberLogServer2"
+		f2, err2 := os.OpenFile(logFileName2, os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+		if err2 != nil {
+		    log.Printf("ErrorY: %+v\n",err2)
+		}
+		defer f2.Close()
+		log.SetOutput(f2)
+		log.Printf("InCreate_Obj: %+v\n",obj)
+		b, err6 := json.Marshal(obj)
+	    if err6 != nil {
+	        log.Printf("ErrorY :%s",err6) 
+	    } else {       
+	        var pretty_parsed_body bytes.Buffer
+	        if(json.Indent(&pretty_parsed_body,b, "", "  ") != nil) {
+	            log.Printf("ErrorY")
+	        } else{
+				log.Printf("InCreate_Obj_Pretty: %s\n",string(pretty_parsed_body.Bytes()))
+	        }
+	    }
+    //////////////////////////////////////////////////////////
 
 		count++
 		info.Refresh(obj, true)

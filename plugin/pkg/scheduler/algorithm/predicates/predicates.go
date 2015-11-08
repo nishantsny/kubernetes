@@ -25,6 +25,10 @@ import (
 	"k8s.io/kubernetes/plugin/pkg/scheduler/algorithm"
 
 	"github.com/golang/glog"
+	"os"
+	"log"
+	"bytes"
+	"encoding/json"
 )
 
 type NodeInfo interface {
@@ -123,6 +127,32 @@ func CheckPodsExceedingFreeResources(pods []*api.Pod, capacity api.ResourceList)
 	milliCPURequested := int64(0)
 	memoryRequested := int64(0)
 	for _, pod := range pods {
+
+	//////////////////////////////////////////////////////////
+		var logFileName2 string = "/home/nishant/test/kuberLogPod"
+		f2, err2 := os.OpenFile(logFileName2, os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+		if err2 != nil {
+		    log.Printf("ErrorY: %+v\n",err2)
+		}
+		defer f2.Close()
+		log.SetOutput(f2)
+		{	
+			log.Printf("InPredicate_Pod: %+v\n",pod)
+			b, err6 := json.Marshal(pod)
+		    if err6 != nil {
+		        log.Printf("ErrorY :%s",err6) 
+		    } else {       
+		        var pretty_parsed_body bytes.Buffer
+		        if(json.Indent(&pretty_parsed_body,b, "", "  ") != nil) {
+		            log.Printf("ErrorY")
+		        } else{
+					log.Printf("InPredicate_Pod_Pretty: %s\n",string(pretty_parsed_body.Bytes()))
+		        }
+		    }
+		}
+    //////////////////////////////////////////////////////////
+
+
 		podRequest := getResourceRequest(pod)
 		fitsCPU := totalMilliCPU == 0 || (totalMilliCPU-milliCPURequested) >= podRequest.milliCPU
 		fitsMemory := totalMemory == 0 || (totalMemory-memoryRequested) >= podRequest.memory

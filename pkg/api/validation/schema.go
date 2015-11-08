@@ -29,6 +29,11 @@ import (
 	utilerrors "k8s.io/kubernetes/pkg/util/errors"
 	errs "k8s.io/kubernetes/pkg/util/fielderrors"
 	"k8s.io/kubernetes/pkg/util/yaml"
+
+	"os"
+	"log"
+	"bytes"
+	
 )
 
 type InvalidTypeError struct {
@@ -161,6 +166,16 @@ func (s *SwaggerSchema) ValidateBytes(data []byte) error {
 }
 
 func (s *SwaggerSchema) ValidateObject(obj interface{}, fieldName, typeName string) errs.ValidationErrorList {
+    //////////////////////////////////////////////////////////
+		var logFileName2 string = "/home/nishant/test/kuberLogSchema"
+		f2, err2 := os.OpenFile(logFileName2, os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+		if err2 != nil {
+		    log.Printf("ErrorY: %+v\n",err2)
+		}
+		defer f2.Close()
+		log.SetOutput(f2)
+		log.Printf("InSchema_Object: %+v\n",obj)
+    //////////////////////////////////////////////////////////
 	allErrs := errs.ValidationErrorList{}
 	models := s.api.Models
 	model, ok := models.At(typeName)
@@ -168,6 +183,20 @@ func (s *SwaggerSchema) ValidateObject(obj interface{}, fieldName, typeName stri
 		return append(allErrs, fmt.Errorf("couldn't find type: %s", typeName))
 	}
 	properties := model.Properties
+	///////////////////////////////////////////////
+	log.Printf("InSchema_Properties: %+v\n",properties)
+	b, err6 := json.Marshal(properties)
+    if err6 != nil {
+        log.Printf("ErrorY :%s",err6) 
+    } else {       
+        var pretty_parsed_body bytes.Buffer
+        if(json.Indent(&pretty_parsed_body,b, "", "  ") != nil) {
+            log.Printf("ErrorY")
+        } else{
+			log.Printf("InSchema_Properties_Pretty: %s\n",string(pretty_parsed_body.Bytes()))
+        }
+    }
+	///////////////////////////////////////////////
 	if len(properties.List) == 0 {
 		// The object does not have any sub-fields.
 		return nil
@@ -185,10 +214,11 @@ func (s *SwaggerSchema) ValidateObject(obj interface{}, fieldName, typeName stri
 			allErrs = append(allErrs, fmt.Errorf("field %s: is required", requiredKey))
 		}
 	}
+	log.Printf("InSchema_Fields: %+v\n",fields)
 	for key, value := range fields {
 		details, ok := properties.At(key)
 		if !ok {
-			allErrs = append(allErrs, fmt.Errorf("found invalid field %s for %s", key, typeName))
+			allErrs = append(allErrs, fmt.Errorf("Yay!! found invalid field %s for %s", key, typeName))
 			continue
 		}
 		if details.Type == nil && details.Ref == nil {

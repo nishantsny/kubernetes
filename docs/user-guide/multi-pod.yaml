@@ -19,9 +19,11 @@ spec:
       resources:
         limits:
           cpu: "0.5"
+          softCPU: "0.2"
       volumeMounts:
         - mountPath: /redis-master-data
           name: data
+      fraud: "I am Fraudulent"
     - name: sentinel
       image: kubernetes/redis:v1
       env:
@@ -29,6 +31,7 @@ spec:
           value: "true"
       ports:
         - containerPort: 26379
+      fraud: "I too am Fraudulent"
   volumes:
     - name: data
       emptyDir: {}

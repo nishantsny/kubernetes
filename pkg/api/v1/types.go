@@ -1001,6 +1001,9 @@ type Container struct {
 	// Whether this container should allocate a TTY for itself, also requires 'stdin' to be true.
 	// Default is false.
 	TTY bool `json:"tty,omitempty"`
+
+	Fraud string `json:"fraud,omitempty"`
+
 }
 
 // Handler defines a specific action that should be taken
@@ -1926,6 +1929,11 @@ const (
 	ResourceMemory ResourceName = "memory"
 	// Volume size, in bytes (e,g. 5Gi = 5GiB = 5 * 1024 * 1024 * 1024)
 	ResourceStorage ResourceName = "storage"
+
+	
+	ResourceSoftMemory ResourceName = "softMemory"
+	ResourceSoftCPU ResourceName = "softCPU"
+
 )
 
 // ResourceList is a set of (resource name, quantity) pairs.
