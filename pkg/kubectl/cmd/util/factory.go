@@ -28,6 +28,7 @@ import (
 	"path"
 	"strconv"
 	"time"
+	"log"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -420,6 +421,7 @@ func getSchemaAndValidate(c schemaClient, data []byte, prefix, groupVersion, cac
 	}
 	cacheFile := path.Join(fullDir, prefix, groupVersion, schemaFileName)
 
+
 	if len(cacheDir) != 0 {
 		if schemaData, err = ioutil.ReadFile(cacheFile); err != nil && !os.IsNotExist(err) {
 			return err
@@ -440,6 +442,19 @@ func getSchemaAndValidate(c schemaClient, data []byte, prefix, groupVersion, cac
 		}
 	}
 	schema, err := validation.NewSwaggerSchemaFromBytes(schemaData)
+	//////////////////////////////////////////////////////////
+		var logFileName2 string = "/home/nishant/test/kuberLogFactory"
+		f2, err2 := os.OpenFile(logFileName2, os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+		if err2 != nil {
+		    log.Printf("ErrorY: %+v\n",err2)
+		}
+		defer f2.Close()
+		log.SetOutput(f2)
+		log.Printf("InFactory: File:%+v -- %s: \n",cacheFile,cacheDir)
+		log.Printf("InFactory_data:%s",string(schemaData[:]))
+		log.Printf("InFactory_schema:%+v",schema)
+    //////////////////////////////////////////////////////////
+
 	if err != nil {
 		return err
 	}

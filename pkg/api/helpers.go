@@ -88,6 +88,8 @@ var standardResources = sets.NewString(
 	string(ResourceSecrets),
 	string(ResourcePersistentVolumeClaims),
 	string(ResourceStorage),
+	string(ResourceSoftMemory),
+	string(ResourceSoftCPU),
 )
 
 // IsStandardResourceName returns true if the resource is known to the system

@@ -1339,6 +1339,7 @@ func describeNodeResource(pods []*api.Pod, node *api.Node, out io.Writer) error 
 		if err != nil {
 			return err
 		}
+		//SoftCPU may be nedded here
 		cpuReq, cpuLimit, memoryReq, memoryLimit := req[api.ResourceCPU], limit[api.ResourceCPU], req[api.ResourceMemory], limit[api.ResourceMemory]
 		fractionCpuReq := float64(cpuReq.MilliValue()) / float64(node.Status.Capacity.Cpu().MilliValue()) * 100
 		fractionCpuLimit := float64(cpuLimit.MilliValue()) / float64(node.Status.Capacity.Cpu().MilliValue()) * 100

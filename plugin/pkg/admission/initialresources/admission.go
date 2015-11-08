@@ -95,6 +95,7 @@ func (ir initialResources) estimateAndFillResourcesIfNotSet(pod *api.Pod) {
 		lim := c.Resources.Limits
 		var cpu, mem *resource.Quantity
 		var err error
+		//SoftCPU may be needed here
 		if _, ok := req[api.ResourceCPU]; !ok {
 			if _, ok2 := lim[api.ResourceCPU]; !ok2 {
 				cpu, err = ir.getEstimation(api.ResourceCPU, c, pod.ObjectMeta.Namespace)

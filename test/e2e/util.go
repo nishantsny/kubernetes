@@ -1310,6 +1310,7 @@ func RunRC(config RCConfig) error {
 	if config.CpuLimit > 0 || config.MemLimit > 0 {
 		rc.Spec.Template.Spec.Containers[0].Resources.Limits = api.ResourceList{}
 	}
+		//SoftCPU may be needed here
 	if config.CpuLimit > 0 {
 		rc.Spec.Template.Spec.Containers[0].Resources.Limits[api.ResourceCPU] = *resource.NewMilliQuantity(config.CpuLimit, resource.DecimalSI)
 	}

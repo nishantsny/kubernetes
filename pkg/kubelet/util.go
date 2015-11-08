@@ -29,6 +29,7 @@ import (
 
 func CapacityFromMachineInfo(info *cadvisorapi.MachineInfo) api.ResourceList {
 	c := api.ResourceList{
+		//SoftCPU may be needed here
 		api.ResourceCPU: *resource.NewMilliQuantity(
 			int64(info.NumCores*1000),
 			resource.DecimalSI),

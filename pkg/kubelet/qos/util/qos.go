@@ -64,6 +64,7 @@ func GetQoS(container *api.Container) map[api.ResourceName]string {
 
 // supportedComputeResources returns a list of supported compute resources
 func supportedComputeResources() []api.ResourceName {
+		//SoftCPU may be needed here
 	return []api.ResourceName{api.ResourceCPU, api.ResourceMemory}
 }
 

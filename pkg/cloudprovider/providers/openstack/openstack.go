@@ -179,6 +179,7 @@ func (os *OpenStack) Instances() (cloudprovider.Instances, bool) {
 		if err != nil {
 			return false, err
 		}
+		//SoftCPU may be needed here
 		for _, flavor := range flavorList {
 			rsrc := api.NodeResources{
 				Capacity: api.ResourceList{

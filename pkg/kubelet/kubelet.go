@@ -2520,6 +2520,8 @@ func (kl *Kubelet) setNodeStatus(node *api.Node) error {
 	if err != nil {
 		// TODO(roberthbailey): This is required for test-cmd.sh to pass.
 		// See if the test should be updated instead.
+
+		//SoftCPU may be needed here
 		node.Status.Capacity = api.ResourceList{
 			api.ResourceCPU:    *resource.NewMilliQuantity(0, resource.DecimalSI),
 			api.ResourceMemory: resource.MustParse("0Gi"),

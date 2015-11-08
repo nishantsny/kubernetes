@@ -161,6 +161,8 @@ func (rm *ResourceQuotaController) syncResourceQuota(quota api.ResourceQuota) (e
 
 		var value *resource.Quantity
 
+		//SoftCPU may be needed here
+
 		switch k {
 		case api.ResourcePods:
 			value = resource.NewQuantity(int64(len(filteredPods)), resource.DecimalSI)
