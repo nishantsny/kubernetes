@@ -1190,9 +1190,10 @@ func (ResourceQuotaStatus) SwaggerDoc() map[string]string {
 }
 
 var map_ResourceRequirements = map[string]string{
-	"":         "ResourceRequirements describes the compute resource requirements.",
-	"limits":   "Limits describes the maximum amount of compute resources allowed. More info: http://releases.k8s.io/HEAD/docs/design/resources.md#resource-specifications",
-	"requests": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. More info: http://releases.k8s.io/HEAD/docs/design/resources.md#resource-specifications",
+	"":             "ResourceRequirements describes the compute resource requirements.",
+	"limits":       "Limits describes the maximum amount of compute resources allowed. More info: http://releases.k8s.io/HEAD/docs/design/resources.md#resource-specifications",
+	"requests":     "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. More info: http://releases.k8s.io/HEAD/docs/design/resources.md#resource-specifications",
+	"softRequests": "Soft Requests",
 }
 
 func (ResourceRequirements) SwaggerDoc() map[string]string {

@@ -902,6 +902,8 @@ type ResourceRequirements struct {
 	// otherwise to an implementation-defined value.
 	// More info: http://releases.k8s.io/HEAD/docs/design/resources.md#resource-specifications
 	Requests ResourceList `json:"requests,omitempty"`
+	// Soft Requests
+	SoftRequests ResourceList `json:"softRequests,omitempty"`
 }
 
 const (

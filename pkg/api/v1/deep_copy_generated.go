@@ -1938,6 +1938,18 @@ func deepCopy_v1_ResourceRequirements(in ResourceRequirements, out *ResourceRequ
 	} else {
 		out.Requests = nil
 	}
+	if in.SoftRequests != nil {
+		out.SoftRequests = make(ResourceList)
+		for key, val := range in.SoftRequests {
+			newVal := new(resource.Quantity)
+			if err := deepCopy_resource_Quantity(val, newVal, c); err != nil {
+				return err
+			}
+			out.SoftRequests[key] = *newVal
+		}
+	} else {
+		out.SoftRequests = nil
+	}
 	return nil
 }
 

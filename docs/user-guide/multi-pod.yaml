@@ -19,7 +19,11 @@ spec:
       resources:
         limits:
           cpu: "0.5"
+          memory: "7516192768"
           softCPU: "0.2"
+        softRequests:
+          cpu: "0.2"
+          memory: "737418240"
       volumeMounts:
         - mountPath: /redis-master-data
           name: data
@@ -47,6 +51,11 @@ spec:
   containers:
   - name: proxy
     image: kubernetes/redis-proxy:v1
+    resources:
+        limits:
+          cpu: "0.5"
+          softCPU: "0.2"
+          memory: "7516192768"
     ports:
     - containerPort: 6379
       name: api

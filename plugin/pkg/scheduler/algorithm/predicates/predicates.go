@@ -117,6 +117,18 @@ func getResourceRequest(pod *api.Pod) resourceRequest {
 		requests := container.Resources.Requests
 		result.memory += requests.Memory().Value()
 		result.milliCPU += requests.Cpu().MilliValue()
+		// add softs
+	}
+	return result
+}
+
+//adding softRequests
+func getSoftResourceRequest(pod *api.Pod) resourceRequest {
+	result := resourceRequest{}
+	for _, container := range pod.Spec.Containers {
+		requests := container.Resources.SoftRequests
+		result.memory += requests.Memory().Value()
+		result.milliCPU += requests.Cpu().MilliValue()
 	}
 	return result
 }
@@ -147,12 +159,15 @@ func CheckPodsExceedingFreeResources(pods []*api.Pod, capacity api.ResourceList)
 		            log.Printf("ErrorY")
 		        } else{
 					log.Printf("InPredicate_Pod_Pretty: %s\n",string(pretty_parsed_body.Bytes()))
+					log.Printf("InPredicate_Limits totalMilliCPU:%+v  totalMemory:%+v\n",totalMilliCPU,totalMemory)
 		        }
 		    }
 		}
     //////////////////////////////////////////////////////////
 
 
+		//changing these to softs
+		/*
 		podRequest := getResourceRequest(pod)
 		fitsCPU := totalMilliCPU == 0 || (totalMilliCPU-milliCPURequested) >= podRequest.milliCPU
 		fitsMemory := totalMemory == 0 || (totalMemory-memoryRequested) >= podRequest.memory
@@ -169,6 +184,25 @@ func CheckPodsExceedingFreeResources(pods []*api.Pod, capacity api.ResourceList)
 		// the pod fits
 		milliCPURequested += podRequest.milliCPU
 		memoryRequested += podRequest.memory
+		fitting = append(fitting, pod)*/
+
+		podRequest := getResourceRequest(pod)
+		podSoftRequest := getSoftResourceRequest(pod)
+		fitsCPU := totalMilliCPU == 0 || ((totalMilliCPU-milliCPURequested) >= podSoftRequest.milliCPU && totalMilliCPU >= podRequest.milliCPU)
+		fitsMemory := totalMemory == 0 || ((totalMemory-memoryRequested) >= podSoftRequest.memory && totalMemory >= podRequest.memory)
+		if !fitsCPU {
+			// the pod doesn't fit due to CPU request
+			notFittingCPU = append(notFittingCPU, pod)
+			continue
+		}
+		if !fitsMemory {
+			// the pod doesn't fit due to Memory request
+			notFittingMemory = append(notFittingMemory, pod)
+			continue
+		}
+		// the pod fits
+		milliCPURequested += podSoftRequest.milliCPU
+		memoryRequested += podSoftRequest.memory
 		fitting = append(fitting, pod)
 	}
 	return
