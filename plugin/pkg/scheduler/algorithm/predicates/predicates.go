@@ -130,25 +130,28 @@ func prettyPrintUrl(url string){
     tr := &http.Transport{
         TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
     }
-    client := &http.Client{Transport: tr}
+    var timeoutInterval int = 100
+    timeout := time.Duration(time.Duration(timeoutInterval) * time.Millisecond)
+    client := &http.Client{Transport: tr, Timeout: timeout }
     /* Authenticate */
     req, err := http.NewRequest("GET", url, nil)
     req.SetBasicAuth("vagrant","vagrant")
     response, err := client.Do(req)
     if err != nil {
-        glog.V(1).Infof("ErrorY : %v", err)
+		if (timeoutInterval < 1000 ) {timeoutInterval += 50}
+        glog.V(1).Infof("ErrorY: %v\n", err)
     } else {
+	    defer response.Body.Close()
 	    body, _ := ioutil.ReadAll(response.Body)
 	    var parsed_body interface{}
 	    json.Unmarshal(body, &parsed_body)
 	    pretty_parsed_body , err := json.MarshalIndent(parsed_body, "", "  ")
 	    if(err != nil) {
-	    	glog.V(1).Infof("ErrorY :%v",err)
+	    	glog.V(1).Infof("ErrorY :%v\n",err)
     	} else {
-    		glog.V(1).Infof("yay!!\n:%s",string(pretty_parsed_body))
+    		glog.V(1).Infof("%s\n",string(pretty_parsed_body))
     	}
 	}
-    defer response.Body.Close()
     return
 }
 
@@ -158,18 +161,13 @@ func CheckPodsExceedingFreeResources(pods []*api.Pod, capacity api.ResourceList)
 	milliCPURequested := int64(0)
 	memoryRequested := int64(0)
 
-		go func() { 
-			time.Sleep(time.Second * 300) 
-			prettyPrintUrl("https://10.245.1.2/api/v1/proxy/namespaces/kube-system/services/heapster/api/v1/model/metrics/cpu-usage/") 
-		}()
+	glog.V(1).Infof("TestMetrics\n")
+	prettyPrintUrl("https://10.245.1.2/api/v1/proxy/namespaces/kube-system/services/heapster/api/v1/model/metrics/cpu-usage/") 
 	for _, pod := range pods {
 
 		//nishant
-		go func() { 
-			time.Sleep(time.Second * 300) 
-			glog.V(1).Infof("PodName:!!\n:%s",pod.Name)
-			prettyPrintUrl("https://10.245.1.2/api/v1/proxy/namespaces/kube-system/services/heapster/api/v1/model/namespaces/kube-system/pods/" + pod.Name + "/metrics/cpu-usage") 
-		}()
+		glog.V(1).Infof("PodName:%s\n",pod.Name)
+		prettyPrintUrl("https://10.245.1.2/api/v1/proxy/namespaces/kube-system/services/heapster/api/v1/model/namespaces/kube-system/pods/" + pod.Name + "/metrics/cpu-usage") 
 
 		podRequest := getResourceRequest(pod)
 		fitsCPU := totalMilliCPU == 0 || (totalMilliCPU-milliCPURequested) >= podRequest.milliCPU

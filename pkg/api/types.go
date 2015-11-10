@@ -754,6 +754,8 @@ type ResourceRequirements struct {
 	// If Request is omitted for a container, it defaults to Limits if that is explicitly specified,
 	// otherwise to an implementation-defined value
 	Requests ResourceList `json:"requests,omitempty"`
+
+	// SoftRequests ResourceList `json:"softRequests,omitempty"`
 }
 
 // Container represents a single container that is expected to be run on the host.
