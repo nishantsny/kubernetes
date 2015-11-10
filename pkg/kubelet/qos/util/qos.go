@@ -26,6 +26,7 @@ const (
 	BestEffort = "BestEffort"
 )
 
+//softCPU is needed to change the logic of priorities
 // isResourceGuaranteed returns true if the container's resource requirements are Guaranteed.
 func isResourceGuaranteed(container *api.Container, resource api.ResourceName) bool {
 	// A container resource is guaranteed if its request == limit.
@@ -71,6 +72,7 @@ func supportedComputeResources() []api.ResourceName {
 // allResources returns a set of all possible resources whose mapped key value is true if present on the container
 func allResources(container *api.Container) map[api.ResourceName]bool {
 	resources := map[api.ResourceName]bool{}
+	//spftCPU may be needed
 	for _, resource := range supportedComputeResources() {
 		resources[resource] = false
 	}

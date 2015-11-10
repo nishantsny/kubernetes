@@ -24,7 +24,7 @@ KUBE_ROOT=$(dirname "${BASH_SOURCE}")/..
 source "${KUBE_ROOT}/hack/lib/init.sh"
 
 rm -rf $HOME/.kube
-rm $HOME/test/kubeLog*
+rm -f $HOME/test/kubeLog*
 
 kube::golang::build_binaries "$@"
 kube::golang::place_bins

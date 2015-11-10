@@ -26,6 +26,7 @@ const (
 	KubeProxyOOMScoreAdj int = -999
 )
 
+//softMemory is needed to change the logic of priorities
 // isMemoryBestEffort returns true if the container's memory requirements are best-effort.
 func isMemoryBestEffort(container *api.Container) bool {
 	// A container is memory best-effort if its memory request is unspecified or 0.

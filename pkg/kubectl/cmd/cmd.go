@@ -180,6 +180,9 @@ Find more information at https://github.com/kubernetes/kubernetes.`,
 	cmds.AddCommand(NewCmdExplain(f, out))
 	cmds.AddCommand(NewCmdConvert(f, out))
 
+  //nishant: add custom command here
+  cmds.AddCommand(NewCmdShrink(f,out))
+
 	return cmds
 }
 
