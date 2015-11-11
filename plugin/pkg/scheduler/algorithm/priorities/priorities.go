@@ -81,7 +81,12 @@ func calculateResourceOccupancy(pod *api.Pod, node api.Node, pods []*api.Pod) al
 
 	for _, existingPod := range pods {
 		for _, container := range existingPod.Spec.Containers {
-			cpu, memory := getNonzeroRequests(&container.Resources.Requests)
+			cpu, memory := getNonzeroRequests(&container.Resources.SoftRequests)
+			podFullStats ,err := predicates.GetPodFullStats(existingPod.Name,existingPod.Namespace)
+			if(err == nil){
+				cpu = predicates.Int64Max(cpu,podFullStats.Stats.CpuUsage.Hour.Percentile)
+				memory = predicates.Int64Max(cpu,podFullStats.Stats.MemoryUsage.Hour.Percentile)
+			}
 			totalMilliCPU += cpu
 			totalMemory += memory
 		}
@@ -89,7 +94,7 @@ func calculateResourceOccupancy(pod *api.Pod, node api.Node, pods []*api.Pod) al
 	// Add the resources requested by the current pod being scheduled.
 	// This also helps differentiate between differently sized, but empty, nodes.
 	for _, container := range pod.Spec.Containers {
-		cpu, memory := getNonzeroRequests(&container.Resources.Requests)
+		cpu, memory := getNonzeroRequests(&container.Resources.SoftRequests)
 		totalMilliCPU += cpu
 		totalMemory += memory
 	}
@@ -173,7 +178,7 @@ func (n *NodeLabelPrioritizer) CalculateNodeLabelPriority(pod *api.Pod, podListe
 
 // BalancedResourceAllocation favors nodes with balanced resource usage rate.
 // BalancedResourceAllocation should **NOT** be used alone, and **MUST** be used together with LeastRequestedPriority.
-// It calculates the difference between the cpu and memory fracion of capacity, and prioritizes the host based on how
+// It calculates the difference between the cpu and memory fraction of capacity, and prioritizes the host based on how
 // close the two metrics are to each other.
 // Detail: score = 10 - abs(cpuFraction-memoryFraction)*10. The algorithm is partly inspired by:
 // "Wei Huang et al. An Energy Efficient Virtual Machine Placement Algorithm with Balanced Resource Utilization"
@@ -197,7 +202,12 @@ func calculateBalancedResourceAllocation(pod *api.Pod, node api.Node, pods []*ap
 	score := int(0)
 	for _, existingPod := range pods {
 		for _, container := range existingPod.Spec.Containers {
-			cpu, memory := getNonzeroRequests(&container.Resources.Requests)
+			cpu, memory := getNonzeroRequests(&container.Resources.SoftRequests)
+			podFullStats ,err := predicates.GetPodFullStats(existingPod.Name,existingPod.Namespace)
+			if(err == nil){
+				cpu = predicates.Int64Max(cpu,podFullStats.Stats.CpuUsage.Hour.Percentile)
+				memory = predicates.Int64Max(cpu,podFullStats.Stats.MemoryUsage.Hour.Percentile)
+			}
 			totalMilliCPU += cpu
 			totalMemory += memory
 		}
@@ -205,7 +215,7 @@ func calculateBalancedResourceAllocation(pod *api.Pod, node api.Node, pods []*ap
 	// Add the resources requested by the current pod being scheduled.
 	// This also helps differentiate between differently sized, but empty, nodes.
 	for _, container := range pod.Spec.Containers {
-		cpu, memory := getNonzeroRequests(&container.Resources.Requests)
+		cpu, memory := getNonzeroRequests(&container.Resources.SoftRequests)
 		totalMilliCPU += cpu
 		totalMemory += memory
 	}

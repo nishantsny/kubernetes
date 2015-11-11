@@ -21,7 +21,7 @@ spec:
           cpu: "0.5"
         softRequests:
           cpu: "0.2"
-          memory: "512M"
+          memory: "22M"
       volumeMounts:
         - mountPath: /redis-master-data
           name: data

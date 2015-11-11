@@ -169,8 +169,9 @@ type PodFullStats struct {
     Stats PodStats `json:"stats,omitempty"`
 }
 
-func prettyPrintUrl(url string) (PodFullStats ,error) {
+func GetPodFullStats(podName string, podNamespace string) (PodFullStats ,error) {
 	// Trust Certificates
+	url := "https://10.245.1.2/api/v1/proxy/namespaces/kube-system/services/heapster/api/v1/model/namespaces/" + podNamespace + "/pods/" + podName + "/stats/"
     tr := &http.Transport{
         TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
     }
@@ -209,13 +210,14 @@ func CheckPodsExceedingFreeResources(pods []*api.Pod, capacity api.ResourceList)
 
 		//nishant
 		glog.V(1).Infof("PodName:%s\n",pod.Name)
-		podFullStats,statsErr := prettyPrintUrl("https://10.245.1.2/api/v1/proxy/namespaces/kube-system/services/heapster/api/v1/model/namespaces/kube-system/pods/" + pod.Name + "/stats/") 
+		podFullStats,statsErr := GetPodFullStats(pod.Name,pod.Namespace) 
 
 		// podRequest := getResourceRequest(pod)
 		podRequest := getSoftResourceRequest(pod)
+		glog.V(1).Infof("PodRequest: %+v\n",podRequest)
 		if(statsErr == nil ){
-			podRequest.milliCPU = Int64Max(podRequest.milliCPU,podFullStats.Stats.CpuUsage.Minute.Average)
-			podRequest.memory = Int64Max(podRequest.memory,podFullStats.Stats.MemoryUsage.Minute.Average)
+			podRequest.milliCPU = Int64Max(podRequest.milliCPU,podFullStats.Stats.CpuUsage.Hour.Percentile)
+			podRequest.memory = Int64Max(podRequest.memory,podFullStats.Stats.MemoryUsage.Hour.Percentile)
 		}
 
 		fitsCPU := totalMilliCPU == 0 || (totalMilliCPU-milliCPURequested) >= podRequest.milliCPU
@@ -243,6 +245,7 @@ func podName(pod *api.Pod) string {
 }
 
 // PodFitsResources calculates fit based on requested, rather than used resources
+// Fixed the above, now it calculates fit based on used resources of the previous pods and softRequest of the current pod
 func (r *ResourceFit) PodFitsResources(pod *api.Pod, existingPods []*api.Pod, node string) (bool, error) {
 	podRequest := getResourceRequest(pod)
 	info, err := r.info.GetNodeInfo(node)
