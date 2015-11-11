@@ -637,6 +637,18 @@ func deepCopy_api_ResourceRequirements(in api.ResourceRequirements, out *api.Res
 	} else {
 		out.Requests = nil
 	}
+	if in.SoftRequests != nil {
+		out.SoftRequests = make(api.ResourceList)
+		for key, val := range in.SoftRequests {
+			newVal := new(resource.Quantity)
+			if err := deepCopy_resource_Quantity(val, newVal, c); err != nil {
+				return err
+			}
+			out.SoftRequests[key] = *newVal
+		}
+	} else {
+		out.SoftRequests = nil
+	}
 	return nil
 }
 

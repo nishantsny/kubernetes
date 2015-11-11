@@ -19,6 +19,9 @@ spec:
       resources:
         limits:
           cpu: "0.5"
+        softRequests:
+          cpu: "0.2"
+          memory: "512M"
       volumeMounts:
         - mountPath: /redis-master-data
           name: data
@@ -47,3 +50,9 @@ spec:
     ports:
     - containerPort: 6379
       name: api
+    resources:
+        limits:
+          cpu: "0.5"
+        softRequests:
+          cpu: "0.2"
+          memory: "2M"

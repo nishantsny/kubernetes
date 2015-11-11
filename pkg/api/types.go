@@ -755,7 +755,7 @@ type ResourceRequirements struct {
 	// otherwise to an implementation-defined value
 	Requests ResourceList `json:"requests,omitempty"`
 
-	// SoftRequests ResourceList `json:"softRequests,omitempty"`
+	SoftRequests ResourceList `json:"softRequests,omitempty"`
 }
 
 // Container represents a single container that is expected to be run on the host.

@@ -124,8 +124,52 @@ func getResourceRequest(pod *api.Pod) resourceRequest {
 	return result
 }
 
+
 //nishant
-func prettyPrintUrl(url string){
+func Int64Max(a,b int64) int64 {
+	if(a < b) {
+		return b
+	} else {
+		return a
+	}
+}
+
+func getSoftResourceRequest(pod *api.Pod) resourceRequest {
+	result := resourceRequest{}
+	for _, container := range pod.Spec.Containers {
+		requests := container.Resources.SoftRequests
+		result.memory += requests.Memory().Value()
+		result.milliCPU += requests.Cpu().MilliValue()
+	}
+	return result
+}
+
+type PodIntervalData struct{
+    Average int64 `json:"average,omitempty"`
+    Percentile int64 `json:"percentile,omitempty"`
+    Max int64 `json:"max,omitempty"`
+}
+
+type PodResources struct {
+    Minute PodIntervalData `json:"minute,omitempty"`
+    Hour PodIntervalData  `json:"hour,omitempty"`
+    Day PodIntervalData `json:"day,omitempty"`
+}
+
+type PodStats struct{
+    CpuLimit PodResources `json:"cpu-limit,omitempty"`
+    CpuUsage PodResources `json:"cpu-usage,omitempty"`
+    MemoryLimit PodResources `json:"memory-limit,omitempty"`
+    MemoryUsage PodResources `json:"memory-usage,omitempty"`
+    MemoryWorking PodResources `json:"memory-working,omitempty"`
+}
+
+type PodFullStats struct {
+    Uptime int64 `json:"uptime,omitempty"`
+    Stats PodStats `json:"stats,omitempty"`
+}
+
+func prettyPrintUrl(url string) (PodFullStats ,error) {
 	// Trust Certificates
     tr := &http.Transport{
         TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -137,22 +181,22 @@ func prettyPrintUrl(url string){
     req, err := http.NewRequest("GET", url, nil)
     req.SetBasicAuth("vagrant","vagrant")
     response, err := client.Do(req)
+    var FullStats PodFullStats
     if err != nil {
+        glog.V(1).Infof("ErrorY: %v\n timeoutInterval:%d\n", err,timeoutInterval)
 		if (timeoutInterval < 1000 ) {timeoutInterval += 50}
-        glog.V(1).Infof("ErrorY: %v\n", err)
     } else {
 	    defer response.Body.Close()
 	    body, _ := ioutil.ReadAll(response.Body)
-	    var parsed_body interface{}
-	    json.Unmarshal(body, &parsed_body)
-	    pretty_parsed_body , err := json.MarshalIndent(parsed_body, "", "  ")
+	    json.Unmarshal(body, &FullStats)
+	    pretty_parsed_body , err := json.MarshalIndent(FullStats, "", "  ")
 	    if(err != nil) {
 	    	glog.V(1).Infof("ErrorY :%v\n",err)
     	} else {
     		glog.V(1).Infof("%s\n",string(pretty_parsed_body))
     	}
 	}
-    return
+    return FullStats, err
 }
 
 func CheckPodsExceedingFreeResources(pods []*api.Pod, capacity api.ResourceList) (fitting []*api.Pod, notFittingCPU, notFittingMemory []*api.Pod) {
@@ -161,15 +205,19 @@ func CheckPodsExceedingFreeResources(pods []*api.Pod, capacity api.ResourceList)
 	milliCPURequested := int64(0)
 	memoryRequested := int64(0)
 
-	glog.V(1).Infof("TestMetrics\n")
-	prettyPrintUrl("https://10.245.1.2/api/v1/proxy/namespaces/kube-system/services/heapster/api/v1/model/metrics/cpu-usage/") 
 	for _, pod := range pods {
 
 		//nishant
 		glog.V(1).Infof("PodName:%s\n",pod.Name)
-		prettyPrintUrl("https://10.245.1.2/api/v1/proxy/namespaces/kube-system/services/heapster/api/v1/model/namespaces/kube-system/pods/" + pod.Name + "/metrics/cpu-usage") 
+		podFullStats,statsErr := prettyPrintUrl("https://10.245.1.2/api/v1/proxy/namespaces/kube-system/services/heapster/api/v1/model/namespaces/kube-system/pods/" + pod.Name + "/stats/") 
 
-		podRequest := getResourceRequest(pod)
+		// podRequest := getResourceRequest(pod)
+		podRequest := getSoftResourceRequest(pod)
+		if(statsErr == nil ){
+			podRequest.milliCPU = Int64Max(podRequest.milliCPU,podFullStats.Stats.CpuUsage.Minute.Average)
+			podRequest.memory = Int64Max(podRequest.memory,podFullStats.Stats.MemoryUsage.Minute.Average)
+		}
+
 		fitsCPU := totalMilliCPU == 0 || (totalMilliCPU-milliCPURequested) >= podRequest.milliCPU
 		fitsMemory := totalMemory == 0 || (totalMemory-memoryRequested) >= podRequest.memory
 		if !fitsCPU {
