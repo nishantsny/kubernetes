@@ -79,5 +79,8 @@ func allResources(container *api.Container) map[api.ResourceName]bool {
 	for resource := range container.Resources.Limits {
 		resources[resource] = true
 	}
+	for resource := range container.Resources.SoftRequests {
+		resources[resource] = true
+	}
 	return resources
 }

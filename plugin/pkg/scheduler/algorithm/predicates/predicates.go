@@ -164,40 +164,69 @@ type PodStats struct{
     MemoryWorking PodResources `json:"memory-working,omitempty"`
 }
 
-type PodFullStats struct {
+type FullStats struct {
     Uptime int64 `json:"uptime,omitempty"`
     Stats PodStats `json:"stats,omitempty"`
 }
 
-func GetPodFullStats(podName string, podNamespace string) (PodFullStats ,error) {
+var timeoutInterval int = 200
+func GetPodFullStats(podName string, podNamespace string) (FullStats ,error) {
 	// Trust Certificates
 	url := "https://10.245.1.2/api/v1/proxy/namespaces/kube-system/services/heapster/api/v1/model/namespaces/" + podNamespace + "/pods/" + podName + "/stats/"
     tr := &http.Transport{
         TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
     }
-    var timeoutInterval int = 100
     timeout := time.Duration(time.Duration(timeoutInterval) * time.Millisecond)
     client := &http.Client{Transport: tr, Timeout: timeout }
     /* Authenticate */
     req, err := http.NewRequest("GET", url, nil)
     req.SetBasicAuth("vagrant","vagrant")
     response, err := client.Do(req)
-    var FullStats PodFullStats
+    var podFullStats FullStats
     if err != nil {
-        glog.V(1).Infof("ErrorY: %v\n timeoutInterval:%d\n", err,timeoutInterval)
-		if (timeoutInterval < 1000 ) {timeoutInterval += 50}
+        glog.V(1).Infof("ErrorY: %v\n", err)
     } else {
 	    defer response.Body.Close()
 	    body, _ := ioutil.ReadAll(response.Body)
-	    json.Unmarshal(body, &FullStats)
-	    pretty_parsed_body , err := json.MarshalIndent(FullStats, "", "  ")
+	    json.Unmarshal(body, &podFullStats)
+	    pretty_parsed_body , err := json.MarshalIndent(podFullStats, "", "  ")
 	    if(err != nil) {
 	    	glog.V(1).Infof("ErrorY :%v\n",err)
     	} else {
     		glog.V(1).Infof("%s\n",string(pretty_parsed_body))
     	}
 	}
-    return FullStats, err
+    return podFullStats, err
+}
+
+
+func GetNodeFullStats(nodeName string) (FullStats ,error) {
+	// Trust Certificates
+	url := "https://10.245.1.2/api/v1/proxy/namespaces/kube-system/services/heapster/api/v1/model/nodes/" + nodeName + "/stats"
+    tr := &http.Transport{
+        TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+    }
+    timeout := time.Duration(time.Duration(timeoutInterval) * time.Millisecond)
+    client := &http.Client{Transport: tr, Timeout: timeout }
+    /* Authenticate */
+    req, err := http.NewRequest("GET", url, nil)
+    req.SetBasicAuth("vagrant","vagrant")
+    response, err := client.Do(req)
+    var nodeFullStats FullStats
+    if err != nil {
+        glog.V(1).Infof("ErrorY: %v\n timeoutInterval:%d\n", err,timeoutInterval)
+    } else {
+	    defer response.Body.Close()
+	    body, _ := ioutil.ReadAll(response.Body)
+	    json.Unmarshal(body, &nodeFullStats)
+	    pretty_parsed_body , err := json.MarshalIndent(nodeFullStats, "", "  ")
+	    if(err != nil) {
+	    	glog.V(1).Infof("ErrorY :%v\n",err)
+    	} else {
+    		glog.V(1).Infof("%s\n",string(pretty_parsed_body))
+    	}
+	}
+    return nodeFullStats, err
 }
 
 func CheckPodsExceedingFreeResources(pods []*api.Pod, capacity api.ResourceList) (fitting []*api.Pod, notFittingCPU, notFittingMemory []*api.Pod) {
@@ -216,8 +245,8 @@ func CheckPodsExceedingFreeResources(pods []*api.Pod, capacity api.ResourceList)
 		podRequest := getSoftResourceRequest(pod)
 		glog.V(1).Infof("PodRequest: %+v\n",podRequest)
 		if(statsErr == nil ){
-			podRequest.milliCPU = Int64Max(podRequest.milliCPU,podFullStats.Stats.CpuUsage.Hour.Percentile)
-			podRequest.memory = Int64Max(podRequest.memory,podFullStats.Stats.MemoryUsage.Hour.Percentile)
+			podRequest.milliCPU = Int64Max(podRequest.milliCPU,podFullStats.Stats.CpuUsage.Minute.Percentile)
+			podRequest.memory = Int64Max(podRequest.memory,podFullStats.Stats.MemoryUsage.Minute.Percentile)
 		}
 
 		fitsCPU := totalMilliCPU == 0 || (totalMilliCPU-milliCPURequested) >= podRequest.milliCPU
@@ -248,11 +277,12 @@ func podName(pod *api.Pod) string {
 // Fixed the above, now it calculates fit based on used resources of the previous pods and softRequest of the current pod
 func (r *ResourceFit) PodFitsResources(pod *api.Pod, existingPods []*api.Pod, node string) (bool, error) {
 	podRequest := getResourceRequest(pod)
+	podSoftRequest := getSoftResourceRequest(pod)
 	info, err := r.info.GetNodeInfo(node)
 	if err != nil {
 		return false, err
 	}
-	if podRequest.milliCPU == 0 && podRequest.memory == 0 {
+	if podRequest.milliCPU == 0 && podRequest.memory == 0 && podSoftRequest.milliCPU == 0 && podSoftRequest.memory == 0 {
 		return int64(len(existingPods)) < info.Status.Capacity.Pods().Value(), nil
 	}
 	pods := []*api.Pod{}
@@ -264,17 +294,28 @@ func (r *ResourceFit) PodFitsResources(pod *api.Pod, existingPods []*api.Pod, no
 		FailedResourceType = "PodExceedsMaxPodNumber"
 		return false, nil
 	}
-	if len(exceedingCPU) > 0 {
-		glog.V(10).Infof("Cannot schedule Pod %+v, because Node %v does not have sufficient CPU", podName(pod), node)
+	nodeFullStats, nodeErr := GetNodeFullStats(node)
+	var isNodeCPUfull bool = false
+	var isNodeMemoryFull bool = false
+	if nodeErr == nil  {
+		if ( nodeFullStats.Stats.CpuUsage.Minute.Percentile + podSoftRequest.milliCPU ) >= info.Status.Capacity.Cpu().MilliValue() {
+			isNodeCPUfull = true
+		}
+		if ( nodeFullStats.Stats.MemoryUsage.Minute.Percentile + podSoftRequest.memory ) >= info.Status.Capacity.Memory().Value() {
+			isNodeMemoryFull = true
+		}
+	}
+	if (len(exceedingCPU) > 0 ) || isNodeCPUfull {
+		glog.V(1).Infof("Cannot schedule Pod %+v, because Node %v does not have sufficient CPU, also isNodeCPUfull: %v", podName(pod), node,isNodeCPUfull )
 		FailedResourceType = "PodExceedsFreeCPU"
 		return false, nil
 	}
-	if len(exceedingMemory) > 0 {
-		glog.V(10).Infof("Cannot schedule Pod %+v, because Node %v does not have sufficient Memory", podName(pod), node)
+	if (len(exceedingMemory) > 0 ) || isNodeMemoryFull {
+		glog.V(1).Infof("Cannot schedule Pod %+v, because Node %v does not have sufficient Memory, also isNodeMemoryFull: %v", podName(pod), node,isNodeMemoryFull )
 		FailedResourceType = "PodExceedsFreeMemory"
 		return false, nil
 	}
-	glog.V(10).Infof("Schedule Pod %+v on Node %+v is allowed, Node is running only %v out of %v Pods.", podName(pod), node, len(pods)-1, info.Status.Capacity.Pods().Value())
+	glog.V(1).Infof("Schedule Pod %+v on Node %+v is allowed, Node is running only %v out of %v Pods.", podName(pod), node, len(pods)-1, info.Status.Capacity.Pods().Value())
 	return true, nil
 }
 

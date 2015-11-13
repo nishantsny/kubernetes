@@ -84,8 +84,8 @@ func calculateResourceOccupancy(pod *api.Pod, node api.Node, pods []*api.Pod) al
 			cpu, memory := getNonzeroRequests(&container.Resources.SoftRequests)
 			podFullStats ,err := predicates.GetPodFullStats(existingPod.Name,existingPod.Namespace)
 			if(err == nil){
-				cpu = predicates.Int64Max(cpu,podFullStats.Stats.CpuUsage.Hour.Percentile)
-				memory = predicates.Int64Max(cpu,podFullStats.Stats.MemoryUsage.Hour.Percentile)
+				cpu = predicates.Int64Max(cpu,podFullStats.Stats.CpuUsage.Minute.Percentile)
+				memory = predicates.Int64Max(cpu,podFullStats.Stats.MemoryUsage.Minute.Percentile)
 			}
 			totalMilliCPU += cpu
 			totalMemory += memory
@@ -205,8 +205,8 @@ func calculateBalancedResourceAllocation(pod *api.Pod, node api.Node, pods []*ap
 			cpu, memory := getNonzeroRequests(&container.Resources.SoftRequests)
 			podFullStats ,err := predicates.GetPodFullStats(existingPod.Name,existingPod.Namespace)
 			if(err == nil){
-				cpu = predicates.Int64Max(cpu,podFullStats.Stats.CpuUsage.Hour.Percentile)
-				memory = predicates.Int64Max(cpu,podFullStats.Stats.MemoryUsage.Hour.Percentile)
+				cpu = predicates.Int64Max(cpu,podFullStats.Stats.CpuUsage.Minute.Percentile)
+				memory = predicates.Int64Max(cpu,podFullStats.Stats.MemoryUsage.Minute.Percentile)
 			}
 			totalMilliCPU += cpu
 			totalMemory += memory
