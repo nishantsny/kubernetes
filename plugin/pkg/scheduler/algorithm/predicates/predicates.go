@@ -194,7 +194,7 @@ func GetPodFullStats(podName string, podNamespace string) (PodFullStats ,error) 
 	    if(err != nil) {
 	    	glog.V(1).Infof("ErrorY :%v\n",err)
     	} else {
-    		glog.V(1).Infof("%s\n",string(pretty_parsed_body))
+    		glog.V(1).Infof("podName:%s\n%s\n",podNamespace+"/"+podName,string(pretty_parsed_body))
     	}
 	}
     return FullStats, err
